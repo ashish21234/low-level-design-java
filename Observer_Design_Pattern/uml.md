@@ -1,67 +1,82 @@
-# Observer Design Pattern
+# Observer Design Pattern UML
 
 ```mermaid
 classDiagram
+
+class IChannel {
+    <<interface>>
+    +subscribe(ISubscriber s)
+    +unsubscribe(ISubscriber s)
+    +notifySubscribers()
+}
 
 class ISubscriber {
     <<interface>>
     +update()
 }
 
-class IChannel {
-    <<interface>>
-    +subscribe(ISubscriber)
-    +unsubscribe(ISubscriber)
-    +notifySubscribers()
-}
-
 class Channel {
-    -List~ISubscriber~ subscribers
     -String name
     -String latestVideo
+    -List~ISubscriber~ subscribers
 
-    +subscribe(ISubscriber)
-    +unsubscribe(ISubscriber)
+    +Channel(String name)
+    +subscribe(ISubscriber s)
+    +unsubscribe(ISubscriber s)
     +notifySubscribers()
-    +uploadVideo(String)
+    +uploadVideo(String video)
     +getVideo() String
 }
 
 class Subscriber {
     -String name
     -Channel channel
+
+    +Subscriber(String name, Channel channel)
     +update()
 }
 
 IChannel <|.. Channel
 ISubscriber <|.. Subscriber
 
-Channel "1" o-- "*" ISubscriber : observers
-Subscriber --> Channel : observes
+IChannel --> "1..*" ISubscriber
+
+Subscriber --> Channel
+
 ```
 
 ## Pattern Components
 
 ### Subject
 
+* `IChannel`
+* Defines methods to subscribe, unsubscribe and notify observers.
+
+### Concrete Subject
+
 * `Channel`
-* Maintains list of subscribers
-* Notifies subscribers when a new video is uploaded
+* Stores subscribers.
+* Uploads videos.
+* Notifies all subscribers when a new video is uploaded.
 
 ### Observer
 
 * `ISubscriber`
-* Defines `update()` method
+* Defines the `update()` method.
 
 ### Concrete Observer
 
 * `Subscriber`
-* Receives notifications from channel
+* Receives notifications from the channel.
+* Pulls the latest video information from the channel.
 
-### Flow
+## Flow
 
-1. Subscriber subscribes to Channel.
-2. Channel uploads a video.
+1. Subscribers subscribe to a channel.
+2. Channel uploads a new video.
 3. Channel calls `notifySubscribers()`.
 4. Every subscriber receives `update()`.
-5. Unsubscribed users stop receiving notifications.
+5. Subscriber fetches the latest video using `channel.getVideo()`.
+
+```
+```
