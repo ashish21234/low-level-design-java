@@ -1,0 +1,128 @@
+/*
+=========================================
+HOW DECORATOR PATTERN WORKS HERE
+=========================================
+
+Suppose we create:
+
+    Character mario = new Mario();
+
+At this point:
+
+    mario ----> Mario Object
+
+Now we decorate Mario:
+
+    mario = new HeightUp(mario);
+
+The constructor call:
+
+    new HeightUp(mario)
+
+passes the Mario object as parameter 'c'.
+
+Inside HeightUp:
+
+    public HeightUp(Character c) {
+        super(c);
+    }
+
+This calls the CharacterDecorator constructor:
+
+    public CharacterDecorator(Character c) {
+        this.character = c;
+    }
+
+So the wrapped object is stored:
+
+    character ----> Mario Object
+
+Structure becomes:
+
+    HeightUp Object
+          |
+          v
+      Mario Object
+
+-----------------------------------------
+WHEN getAbilities() IS CALLED
+-----------------------------------------
+
+Calling:
+
+    mario.getAbilities();
+
+actually invokes:
+
+    HeightUp.getAbilities()
+
+which executes:
+
+    return character.getAbilities()
+           + " with HeightUp";
+
+Here 'character' refers to the wrapped Mario object.
+
+Therefore:
+
+    character.getAbilities()
+
+becomes:
+
+    Mario.getAbilities()
+
+which returns:
+
+    "Mario"
+
+So the final result is:
+
+    "Mario" + " with HeightUp"
+
+Output:
+
+    Mario with HeightUp
+
+-----------------------------------------
+MULTIPLE DECORATORS
+-----------------------------------------
+
+Example:
+
+    Character mario = new Mario();
+
+    mario = new HeightUp(mario);
+
+    mario = new GunPowerUp(mario);
+
+Object structure:
+
+        GunPowerUp
+             |
+             v
+         HeightUp
+             |
+             v
+           Mario
+
+Execution:
+
+    GunPowerUp.getAbilities()
+            |
+            v
+    HeightUp.getAbilities()
+            |
+            v
+      Mario.getAbilities()
+
+Returns are built from bottom to top:
+
+    Mario
+
+    Mario with HeightUp
+
+    Mario with HeightUp with Gun
+
+This chaining/delegation mechanism is the core
+idea behind the Decorator Design Pattern.
+*/
