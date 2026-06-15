@@ -1,25 +1,24 @@
-# Parking Lot Management System - UML Class Diagram
+# Parking Lot System - UML Diagram
 
-## Overview
+This UML diagram represents a Parking Lot System designed using Factory and Strategy Design Patterns.
 
-This system demonstrates the use of:
-
-* **Factory Pattern** (`VehicleFactory`)
-* **Strategy Pattern** (`ParkingFeeStrategy`, `PaymentStrategy`)
-* **Inheritance** (`Vehicle`, `ParkingSpot`)
-* **Composition/Aggregation** (`ParkingLot`, `Payment`)
-
----
-
-## Class Diagram (PlantUML)
+## UML Diagram (PlantUML)
 
 ```plantuml
 @startuml
+
+'====================
+' ENUMS
+'====================
 
 enum DurationType {
     HOURS
     DAYS
 }
+
+'====================
+' FEE STRATEGY
+'====================
 
 interface ParkingFeeStrategy {
     +calculateFee(vehicleType : String,
@@ -32,6 +31,10 @@ class PremiumRateStrategy
 
 ParkingFeeStrategy <|.. BasicHourlyRateStrategy
 ParkingFeeStrategy <|.. PremiumRateStrategy
+
+'====================
+' VEHICLES
+'====================
 
 abstract class Vehicle {
     -licensePlate : String
@@ -52,7 +55,7 @@ Vehicle <|-- CarVehicle
 Vehicle <|-- BikeVehicle
 Vehicle <|-- OtherVehicle
 
-Vehicle --> ParkingFeeStrategy
+Vehicle --> ParkingFeeStrategy : uses
 
 class VehicleFactory {
     +createVehicle(vehicleType,
@@ -61,6 +64,10 @@ class VehicleFactory {
 }
 
 VehicleFactory ..> Vehicle
+
+'====================
+' PAYMENT STRATEGY
+'====================
 
 interface PaymentStrategy {
     +processPayment(amount : double)
@@ -80,6 +87,10 @@ class Payment {
 }
 
 Payment --> PaymentStrategy
+
+'====================
+' PARKING SPOTS
+'====================
 
 abstract class ParkingSpot {
     -spotNumber : int
@@ -101,6 +112,10 @@ ParkingSpot <|-- BikeParkingSpot
 
 ParkingSpot --> Vehicle
 
+'====================
+' PARKING LOT
+'====================
+
 class ParkingLot {
     -parkingSpots : List<ParkingSpot>
 
@@ -113,6 +128,10 @@ class ParkingLot {
 ParkingLot *-- ParkingSpot
 ParkingLot --> Vehicle
 
+'====================
+' MAIN
+'====================
+
 class ParkingLotMain
 
 ParkingLotMain ..> ParkingLot
@@ -123,119 +142,44 @@ ParkingLotMain ..> PaymentStrategy
 @enduml
 ```
 
----
-
 ## Design Patterns Used
 
 ### Factory Pattern
-
-**VehicleFactory**
-
-Responsible for creating different types of vehicles:
-
-* CarVehicle
-* BikeVehicle
-* OtherVehicle
-
-This hides object creation logic from the client.
-
----
+- `VehicleFactory`
+- Responsible for creating different vehicle objects (`CarVehicle`, `BikeVehicle`, `OtherVehicle`).
+- Encapsulates object creation logic.
 
 ### Strategy Pattern
-
 #### Parking Fee Strategy
+- `ParkingFeeStrategy`
+- `BasicHourlyRateStrategy`
+- `PremiumRateStrategy`
 
-Interface:
-
-```java
-ParkingFeeStrategy
-```
-
-Implementations:
-
-* BasicHourlyRateStrategy
-* PremiumRateStrategy
-
-Allows parking fee calculation logic to vary independently from vehicle classes.
-
----
+Allows fee calculation logic to be changed without modifying vehicle classes.
 
 #### Payment Strategy
+- `PaymentStrategy`
+- `CashPayment`
+- `CreditCardPayment`
 
-Interface:
+Allows different payment methods to be plugged in dynamically.
 
-```java
-PaymentStrategy
-```
+## Key Components
 
-Implementations:
-
-* CashPayment
-* CreditCardPayment
-
-Allows different payment methods without modifying existing code.
-
----
+| Component | Responsibility |
+|------------|---------------|
+| Vehicle | Represents a parked vehicle |
+| VehicleFactory | Creates vehicle objects |
+| ParkingSpot | Represents a parking slot |
+| ParkingLot | Manages parking spots and parking operations |
+| ParkingFeeStrategy | Calculates parking fees |
+| PaymentStrategy | Handles payment processing |
+| Payment | Executes payment using a chosen strategy |
 
 ## Relationships
 
-### Inheritance
-
-* Vehicle ← CarVehicle
-
-* Vehicle ← BikeVehicle
-
-* Vehicle ← OtherVehicle
-
-* ParkingSpot ← CarParkingSpot
-
-* ParkingSpot ← BikeParkingSpot
-
-### Realization
-
-* ParkingFeeStrategy ← BasicHourlyRateStrategy
-
-* ParkingFeeStrategy ← PremiumRateStrategy
-
-* PaymentStrategy ← CashPayment
-
-* PaymentStrategy ← CreditCardPayment
-
-### Composition
-
-* ParkingLot contains ParkingSpot objects
-
-### Association
-
-* ParkingSpot ↔ Vehicle
-* Payment ↔ PaymentStrategy
-* Vehicle ↔ ParkingFeeStrategy
-
----
-
-## Suggested Improvements
-
-1. Replace String vehicle types with an enum:
-
-```java
-enum VehicleType {
-    CAR,
-    BIKE,
-    AUTO
-}
-```
-
-2. Introduce a PaymentStrategyFactory.
-
-3. Add a ParkingTicket class containing:
-
-* ticketId
-* vehicle
-* spot
-* entryTime
-* exitTime
-
-4. Calculate parking fees automatically using entry and exit timestamps instead of hardcoded durations.
-
-```
-```
+- Vehicle uses ParkingFeeStrategy.
+- Payment uses PaymentStrategy.
+- ParkingLot contains multiple ParkingSpots.
+- ParkingSpot can hold one Vehicle.
+- VehicleFactory creates Vehicle objects.
