@@ -1,29 +1,25 @@
-# Parking Lot System - UML Diagram
+# Parking Lot System UML
 
-This UML diagram represents a Parking Lot System designed using Factory and Strategy Design Patterns.
+```mermaid
+classDiagram
 
-## UML Diagram (PlantUML)
+%% ====================
+%% ENUM
+%% ====================
 
-```plantuml
-@startuml
-
-'====================
-' ENUMS
-'====================
-
-enum DurationType {
+class DurationType {
+    <<enumeration>>
     HOURS
     DAYS
 }
 
-'====================
-' FEE STRATEGY
-'====================
+%% ====================
+%% FEE STRATEGY
+%% ====================
 
-interface ParkingFeeStrategy {
-    +calculateFee(vehicleType : String,
-                  duration : int,
-                  durationType : DurationType) : double
+class ParkingFeeStrategy {
+    <<interface>>
+    +calculateFee(vehicleType, duration, durationType)
 }
 
 class BasicHourlyRateStrategy
@@ -32,19 +28,19 @@ class PremiumRateStrategy
 ParkingFeeStrategy <|.. BasicHourlyRateStrategy
 ParkingFeeStrategy <|.. PremiumRateStrategy
 
-'====================
-' VEHICLES
-'====================
+%% ====================
+%% VEHICLES
+%% ====================
 
-abstract class Vehicle {
+class Vehicle {
+    <<abstract>>
     -licensePlate : String
     -vehicleType : String
     -feeStrategy : ParkingFeeStrategy
 
-    +getVehicleType() : String
-    +getLicensePlate() : String
-    +calculateFee(duration : int,
-                  durationType : DurationType) : double
+    +getVehicleType()
+    +getLicensePlate()
+    +calculateFee(duration, durationType)
 }
 
 class CarVehicle
@@ -55,22 +51,21 @@ Vehicle <|-- CarVehicle
 Vehicle <|-- BikeVehicle
 Vehicle <|-- OtherVehicle
 
-Vehicle --> ParkingFeeStrategy : uses
+Vehicle --> ParkingFeeStrategy
 
 class VehicleFactory {
-    +createVehicle(vehicleType,
-                   licensePlate,
-                   feeStrategy) : Vehicle
+    +createVehicle(vehicleType, licensePlate, feeStrategy)
 }
 
 VehicleFactory ..> Vehicle
 
-'====================
-' PAYMENT STRATEGY
-'====================
+%% ====================
+%% PAYMENT STRATEGY
+%% ====================
 
-interface PaymentStrategy {
-    +processPayment(amount : double)
+class PaymentStrategy {
+    <<interface>>
+    +processPayment(amount)
 }
 
 class CashPayment
@@ -88,17 +83,18 @@ class Payment {
 
 Payment --> PaymentStrategy
 
-'====================
-' PARKING SPOTS
-'====================
+%% ====================
+%% PARKING SPOTS
+%% ====================
 
-abstract class ParkingSpot {
+class ParkingSpot {
+    <<abstract>>
     -spotNumber : int
     -isOccupied : boolean
     -vehicle : Vehicle
     -spotType : String
 
-    +isOccupied() : boolean
+    +isOccupied()
     +parkVehicle(vehicle)
     +vacate()
     +canParkVehicle(vehicle)
@@ -112,12 +108,12 @@ ParkingSpot <|-- BikeParkingSpot
 
 ParkingSpot --> Vehicle
 
-'====================
-' PARKING LOT
-'====================
+%% ====================
+%% PARKING LOT
+%% ====================
 
 class ParkingLot {
-    -parkingSpots : List<ParkingSpot>
+    -parkingSpots : List~ParkingSpot~
 
     +findAvailableSpot(vehicleType)
     +parkVehicle(vehicle)
@@ -128,9 +124,9 @@ class ParkingLot {
 ParkingLot *-- ParkingSpot
 ParkingLot --> Vehicle
 
-'====================
-' MAIN
-'====================
+%% ====================
+%% MAIN
+%% ====================
 
 class ParkingLotMain
 
@@ -138,48 +134,95 @@ ParkingLotMain ..> ParkingLot
 ParkingLotMain ..> VehicleFactory
 ParkingLotMain ..> Payment
 ParkingLotMain ..> PaymentStrategy
-
-@enduml
 ```
 
 ## Design Patterns Used
 
-### Factory Pattern
-- `VehicleFactory`
-- Responsible for creating different vehicle objects (`CarVehicle`, `BikeVehicle`, `OtherVehicle`).
-- Encapsulates object creation logic.
-
 ### Strategy Pattern
-#### Parking Fee Strategy
-- `ParkingFeeStrategy`
-- `BasicHourlyRateStrategy`
-- `PremiumRateStrategy`
 
-Allows fee calculation logic to be changed without modifying vehicle classes.
+#### Parking Fee Calculation
 
-#### Payment Strategy
-- `PaymentStrategy`
-- `CashPayment`
-- `CreditCardPayment`
+* ParkingFeeStrategy
+* BasicHourlyRateStrategy
+* PremiumRateStrategy
 
-Allows different payment methods to be plugged in dynamically.
+Allows different fee calculation algorithms.
 
-## Key Components
+#### Payment Processing
 
-| Component | Responsibility |
-|------------|---------------|
-| Vehicle | Represents a parked vehicle |
-| VehicleFactory | Creates vehicle objects |
-| ParkingSpot | Represents a parking slot |
-| ParkingLot | Manages parking spots and parking operations |
-| ParkingFeeStrategy | Calculates parking fees |
-| PaymentStrategy | Handles payment processing |
-| Payment | Executes payment using a chosen strategy |
+* PaymentStrategy
+* CashPayment
+* CreditCardPayment
 
-## Relationships
+Allows switching payment methods at runtime.
 
-- Vehicle uses ParkingFeeStrategy.
-- Payment uses PaymentStrategy.
-- ParkingLot contains multiple ParkingSpots.
-- ParkingSpot can hold one Vehicle.
-- VehicleFactory creates Vehicle objects.
+---
+
+### Factory Pattern
+
+* VehicleFactory
+
+Responsible for creating different vehicle types:
+
+* CarVehicle
+* BikeVehicle
+* OtherVehicle
+
+without exposing creation logic to the client.
+
+---
+
+### Composition
+
+* ParkingLot contains multiple ParkingSpots.
+
+```text
+ParkingLot
+    |
+    +---- ParkingSpot
+                |
+                +---- CarParkingSpot
+                +---- BikeParkingSpot
+```
+
+---
+
+### Relationships
+
+#### Vehicle → ParkingFeeStrategy
+
+Each vehicle uses a fee calculation strategy.
+
+#### Payment → PaymentStrategy
+
+Each payment delegates processing to a payment strategy.
+
+#### ParkingSpot → Vehicle
+
+A parking spot can contain a parked vehicle.
+
+#### ParkingLot → ParkingSpot
+
+A parking lot manages multiple parking spots.
+
+---
+
+## Flow
+
+```text
+VehicleFactory
+      |
+      v
+    Vehicle
+      |
+      v
+ParkingLot ----> ParkingSpot
+
+Vehicle
+   |
+   +---- ParkingFeeStrategy
+
+Payment
+   |
+   +---- PaymentStrategy
+```
