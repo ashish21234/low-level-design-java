@@ -1,370 +1,216 @@
-# Elevator System — Low Level Design
 
-## Design Patterns Used
+So for the **Elevator LLD**, use Mermaid `classDiagram`, not `@startuml`.
 
-This Elevator System uses the following design patterns:
+Here is the `uml.md` in the same format as your Tic Tac Toe one:
 
-1. **Observer Pattern**
-   - `ElevatorObserver`
-   - `ElevatorDisplay`
-   - `Elevator`
-   
-   Used to notify displays/monitoring components whenever an elevator changes its state or floor.
+```markdown
+# Elevator System UML
 
-2. **Command Pattern**
-   - `ElevatorCommand`
-   - `ElevatorRequest`
-   
-   Used to encapsulate elevator requests as command objects.
+```mermaid
+classDiagram
 
-3. **Strategy Pattern**
-   - `SchedulingStrategy`
-   - `FCFSSchedulingStrategy`
-   - `ScanSchedulingStrategy`
-   - `LookSchedulingStrategy`
-   
-   Used to allow different elevator scheduling algorithms to be selected dynamically.
+%% ====================
+%% ENUMS
+%% ====================
 
-4. **Factory Pattern**
-   - `ElevatorFactory`
-   - `Elevator`
-   - `ExpressElevator`
-   
-   Used to create different types of elevators without directly coupling the client to their concrete classes.
-
----
-
-# UML Class Diagram
-
-```plantuml
-@startuml
-
-title Elevator System - Low Level Design
-
-skinparam classAttributeIconSize 0
-
-' =====================================================
-' ENUMS
-' =====================================================
-
-enum Direction {
+class Direction {
+    <<enumeration>>
     UP
     DOWN
     IDLE
 }
 
-enum ElevatorState {
+class ElevatorState {
+    <<enumeration>>
     IDLE
     MOVING
     STOPPED
     MAINTENANCE
 }
 
+%% ====================
+%% OBSERVER PATTERN
+%% ====================
 
-' =====================================================
-' OBSERVER PATTERN
-' =====================================================
-
-interface ElevatorObserver {
-
-    +onElevatorStateChange(
-        elevator : Elevator,
-        state : ElevatorState
-    )
-
-    +onElevatorFloorChange(
-        elevator : Elevator,
-        floor : int
-    )
+class ElevatorObserver {
+    <<interface>>
+    +onElevatorStateChange(elevator, state)
+    +onElevatorFloorChange(elevator, floor)
 }
 
 class ElevatorDisplay {
-
-    +onElevatorStateChange(
-        elevator : Elevator,
-        state : ElevatorState
-    )
-
-    +onElevatorFloorChange(
-        elevator : Elevator,
-        floor : int
-    )
+    +onElevatorStateChange(elevator, state)
+    +onElevatorFloorChange(elevator, floor)
 }
 
 ElevatorObserver <|.. ElevatorDisplay
 
+%% ====================
+%% COMMAND PATTERN
+%% ====================
 
-' =====================================================
-' COMMAND PATTERN
-' =====================================================
-
-interface ElevatorCommand {
-
+class ElevatorCommand {
+    <<interface>>
     +execute()
 }
 
 class ElevatorRequest {
-
     -elevatorId : int
     -floor : int
     -requestDirection : Direction
     -controller : ElevatorController
     -isInternalRequest : boolean
 
-    +ElevatorRequest(
-        elevatorId : int,
-        floor : int,
-        isInternalRequest : boolean,
-        direction : Direction
-    )
-
     +execute()
-
-    +getDirection() : Direction
-    +getFloor() : int
-    +checkIsInternalRequest() : boolean
+    +getDirection()
+    +getFloor()
+    +checkIsInternalRequest()
 }
 
 ElevatorCommand <|.. ElevatorRequest
 
-ElevatorRequest --> ElevatorController : uses
+ElevatorRequest --> ElevatorController
 ElevatorRequest --> Direction
 
+%% ====================
+%% STRATEGY PATTERN
+%% ====================
 
-' =====================================================
-' STRATEGY PATTERN
-' =====================================================
-
-interface SchedulingStrategy {
-
-    +getNextStop(
-        elevator : Elevator
-    ) : int
+class SchedulingStrategy {
+    <<interface>>
+    +getNextStop(elevator)
 }
 
 class FCFSSchedulingStrategy {
-
-    +getNextStop(
-        elevator : Elevator
-    ) : int
+    +getNextStop(elevator)
 }
 
 class ScanSchedulingStrategy {
-
-    +getNextStop(
-        elevator : Elevator
-    ) : int
-
-    -switchDirection(
-        elevator : Elevator,
-        requestsQueue
-    ) : int
+    +getNextStop(elevator)
+    -switchDirection(elevator, requestsQueue)
 }
 
 class LookSchedulingStrategy {
-
-    +getNextStop(
-        elevator : Elevator
-    ) : int
+    +getNextStop(elevator)
 }
 
 SchedulingStrategy <|.. FCFSSchedulingStrategy
 SchedulingStrategy <|.. ScanSchedulingStrategy
 SchedulingStrategy <|.. LookSchedulingStrategy
 
-
-' =====================================================
-' ELEVATOR
-' =====================================================
+%% ====================
+%% ELEVATOR
+%% ====================
 
 class Elevator {
-
     -id : int
     -currentFloor : int
     -direction : Direction
     -state : ElevatorState
-    -observers : List<ElevatorObserver>
-    -requests : Queue<ElevatorRequest>
+    -observers : List~ElevatorObserver~
+    -requests : Queue~ElevatorRequest~
 
-    +Elevator(id : int)
-
-    +addObserver(
-        observer : ElevatorObserver
-    )
-
-    +removeObserver(
-        observer : ElevatorObserver
-    )
-
-    +setState(
-        newState : ElevatorState
-    )
-
-    +setDirection(
-        newDirection : Direction
-    )
-
-    +addRequest(
-        elevatorRequest : ElevatorRequest
-    )
-
-    +moveToNextStop(
-        nextStop : int
-    )
-
-    +getId() : int
-    +getCurrentFloor() : int
-    +getDirection() : Direction
-    +getState() : ElevatorState
-
-    +getRequestsQueue() : Queue<ElevatorRequest>
-
-    +getDestinationFloors() : List<ElevatorRequest>
+    +Elevator(id)
+    +addObserver(observer)
+    +removeObserver(observer)
+    +setState(newState)
+    +setDirection(newDirection)
+    +addRequest(elevatorRequest)
+    +moveToNextStop(nextStop)
+    +getId()
+    +getCurrentFloor()
+    +getDirection()
+    +getState()
+    +getRequestsQueue()
+    +getDestinationFloors()
 }
 
 Elevator --> Direction
 Elevator --> ElevatorState
-Elevator --> ElevatorObserver : notifies
-Elevator --> ElevatorRequest : contains
+Elevator --> ElevatorObserver
+Elevator --> ElevatorRequest
 
+%% ====================
+%% FLOOR
+%% ====================
 
-' =====================================================
-' ELEVATOR CONTROLLER
-' =====================================================
+class Floor {
+    -floorNumber : int
+
+    +Floor(floorNumber)
+    +getFloorNumber()
+}
+
+%% ====================
+%% ELEVATOR CONTROLLER
+%% ====================
 
 class ElevatorController {
-
-    -elevators : List<Elevator>
-    -floors : List<Floor>
+    -elevators : List~Elevator~
+    -floors : List~Floor~
     -schedulingStrategy : SchedulingStrategy
     -currentElevatorId : int
 
-    +ElevatorController(
-        numberOfElevators : int,
-        numberOfFloors : int
-    )
-
-    +setSchedulingStrategy(
-        strategy : SchedulingStrategy
-    )
-
-    +requestElevator(
-        elevatorId : int,
-        floorNumber : int,
-        direction : Direction
-    )
-
-    +requestFloor(
-        elevatorId : int,
-        floorNumber : int
-    )
-
+    +ElevatorController(numberOfElevators, numberOfFloors)
+    +setSchedulingStrategy(strategy)
+    +requestElevator(elevatorId, floorNumber, direction)
+    +requestFloor(elevatorId, floorNumber)
     +step()
-
-    +getElevators() : List<Elevator>
-    +getFloors() : List<Floor>
-
-    +setCurrentElevator(
-        elevatorId : int
-    )
-
-    -getElevatorById(
-        elevatorId : int
-    ) : Elevator
+    +getElevators()
+    +getFloors()
+    +setCurrentElevator(elevatorId)
+    -getElevatorById(elevatorId)
 }
 
-ElevatorController *-- "1..*" Elevator
-ElevatorController *-- "1..*" Floor
+ElevatorController *-- Elevator
+ElevatorController *-- Floor
+ElevatorController --> SchedulingStrategy
+ElevatorController --> ElevatorRequest
 
-ElevatorController --> SchedulingStrategy : uses
-ElevatorController --> ElevatorRequest : creates
-
-
-' =====================================================
-' FLOOR
-' =====================================================
-
-class Floor {
-
-    -floorNumber : int
-
-    +Floor(
-        floorNumber : int
-    )
-
-    +getFloorNumber() : int
-}
-
-
-' =====================================================
-' BUILDING
-' =====================================================
+%% ====================
+%% BUILDING
+%% ====================
 
 class Building {
-
     -name : String
     -numberOfFloors : int
     -elevatorController : ElevatorController
 
-    +Building(
-        name : String,
-        numberOfFloors : int,
-        numberOfElevators : int
-    )
-
-    +getName() : String
-    +getNumberOfFloors() : int
-    +getElevatorController() : ElevatorController
+    +Building(name, numberOfFloors, numberOfElevators)
+    +getName()
+    +getNumberOfFloors()
+    +getElevatorController()
 }
 
 Building *-- ElevatorController
 
-
-' =====================================================
-' ELEVATOR FACTORY
-' =====================================================
+%% ====================
+%% ELEVATOR FACTORY
+%% ====================
 
 class ElevatorFactory {
-
-    +createElevator(
-        type : String,
-        id : int
-    ) : Elevator
+    +createElevator(type, id)
 }
 
-
 class ExpressElevator {
-
     -SPEED_MULTIPLIER : int
 
-    +ExpressElevator(
-        id : int
-    )
-
-    +moveToNextStop(
-        nextStop : int
-    )
+    +ExpressElevator(id)
+    +moveToNextStop(nextStop)
 }
 
 Elevator <|-- ExpressElevator
 
-ElevatorFactory ..> Elevator : creates
-ElevatorFactory ..> ExpressElevator : creates
+ElevatorFactory ..> Elevator
+ElevatorFactory ..> ExpressElevator
 
-
-' =====================================================
-' MAIN
-' =====================================================
+%% ====================
+%% MAIN
+%% ====================
 
 class Main {
-
-    +main(
-        args : String[]
-    )
-
-    -displayElevatorStatus(
-        elevators : List<Elevator>
-    )
+    +main(args)
+    -displayElevatorStatus(elevators)
 }
 
 Main ..> Building
@@ -374,6 +220,3 @@ Main ..> SchedulingStrategy
 Main ..> ScanSchedulingStrategy
 Main ..> FCFSSchedulingStrategy
 Main ..> LookSchedulingStrategy
-
-
-@enduml
