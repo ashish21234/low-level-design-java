@@ -1,9 +1,3 @@
-
-So for the **Elevator LLD**, use Mermaid `classDiagram`, not `@startuml`.
-
-Here is the `uml.md` in the same format as your Tic Tac Toe one:
-
-```markdown
 # Elevator System UML
 
 ```mermaid
@@ -68,7 +62,6 @@ class ElevatorRequest {
 }
 
 ElevatorCommand <|.. ElevatorRequest
-
 ElevatorRequest --> ElevatorController
 ElevatorRequest --> Direction
 
@@ -87,7 +80,6 @@ class FCFSSchedulingStrategy {
 
 class ScanSchedulingStrategy {
     +getNextStop(elevator)
-    -switchDirection(elevator, requestsQueue)
 }
 
 class LookSchedulingStrategy {
@@ -97,6 +89,8 @@ class LookSchedulingStrategy {
 SchedulingStrategy <|.. FCFSSchedulingStrategy
 SchedulingStrategy <|.. ScanSchedulingStrategy
 SchedulingStrategy <|.. LookSchedulingStrategy
+
+SchedulingStrategy --> Elevator
 
 %% ====================
 %% ELEVATOR
@@ -110,12 +104,11 @@ class Elevator {
     -observers : List~ElevatorObserver~
     -requests : Queue~ElevatorRequest~
 
-    +Elevator(id)
     +addObserver(observer)
     +removeObserver(observer)
-    +setState(newState)
-    +setDirection(newDirection)
-    +addRequest(elevatorRequest)
+    +setState(state)
+    +setDirection(direction)
+    +addRequest(request)
     +moveToNextStop(nextStop)
     +getId()
     +getCurrentFloor()
@@ -128,7 +121,18 @@ class Elevator {
 Elevator --> Direction
 Elevator --> ElevatorState
 Elevator --> ElevatorObserver
-Elevator --> ElevatorRequest
+Elevator o-- ElevatorRequest
+
+%% ====================
+%% SPECIALIZED ELEVATOR
+%% ====================
+
+class ExpressElevator {
+    -SPEED_MULTIPLIER : int
+    +moveToNextStop(nextStop)
+}
+
+Elevator <|-- ExpressElevator
 
 %% ====================
 %% FLOOR
@@ -137,12 +141,11 @@ Elevator --> ElevatorRequest
 class Floor {
     -floorNumber : int
 
-    +Floor(floorNumber)
     +getFloorNumber()
 }
 
 %% ====================
-%% ELEVATOR CONTROLLER
+%% CONTROLLER
 %% ====================
 
 class ElevatorController {
@@ -151,7 +154,6 @@ class ElevatorController {
     -schedulingStrategy : SchedulingStrategy
     -currentElevatorId : int
 
-    +ElevatorController(numberOfElevators, numberOfFloors)
     +setSchedulingStrategy(strategy)
     +requestElevator(elevatorId, floorNumber, direction)
     +requestFloor(elevatorId, floorNumber)
@@ -159,13 +161,25 @@ class ElevatorController {
     +getElevators()
     +getFloors()
     +setCurrentElevator(elevatorId)
-    -getElevatorById(elevatorId)
+    +addElevator(type)
+    +replaceElevator(elevatorId, newType)
 }
 
 ElevatorController *-- Elevator
 ElevatorController *-- Floor
 ElevatorController --> SchedulingStrategy
-ElevatorController --> ElevatorRequest
+ElevatorController ..> ElevatorRequest
+
+%% ====================
+%% FACTORY PATTERN
+%% ====================
+
+class ElevatorFactory {
+    +createElevator(type, id)
+}
+
+ElevatorFactory ..> Elevator
+ElevatorFactory ..> ExpressElevator
 
 %% ====================
 %% BUILDING
@@ -176,7 +190,6 @@ class Building {
     -numberOfFloors : int
     -elevatorController : ElevatorController
 
-    +Building(name, numberOfFloors, numberOfElevators)
     +getName()
     +getNumberOfFloors()
     +getElevatorController()
@@ -185,33 +198,10 @@ class Building {
 Building *-- ElevatorController
 
 %% ====================
-%% ELEVATOR FACTORY
-%% ====================
-
-class ElevatorFactory {
-    +createElevator(type, id)
-}
-
-class ExpressElevator {
-    -SPEED_MULTIPLIER : int
-
-    +ExpressElevator(id)
-    +moveToNextStop(nextStop)
-}
-
-Elevator <|-- ExpressElevator
-
-ElevatorFactory ..> Elevator
-ElevatorFactory ..> ExpressElevator
-
-%% ====================
 %% MAIN
 %% ====================
 
-class Main {
-    +main(args)
-    -displayElevatorStatus(elevators)
-}
+class Main
 
 Main ..> Building
 Main ..> ElevatorController
@@ -219,4 +209,277 @@ Main ..> ElevatorDisplay
 Main ..> SchedulingStrategy
 Main ..> ScanSchedulingStrategy
 Main ..> FCFSSchedulingStrategy
-Main ..> LookSchedulingStrategy
+```
+
+## Design Patterns Used
+
+### Strategy Pattern
+
+* SchedulingStrategy
+* FCFSSchedulingStrategy
+* ScanSchedulingStrategy
+* LookSchedulingStrategy
+
+The scheduling algorithm is separated from the elevator controller.
+
+Different scheduling algorithms can be selected dynamically:
+
+* FCFS
+* SCAN
+* LOOK
+
+This allows the elevator scheduling behavior to change without modifying the `ElevatorController`.
+
+---
+
+### Observer Pattern
+
+* ElevatorObserver
+* ElevatorDisplay
+
+The `Elevator` notifies registered observers when:
+
+* Its state changes
+* Its current floor changes
+
+```text
+Elevator
+    |
+    +---- ElevatorObserver
+                |
+                +---- ElevatorDisplay
+```
+
+This allows additional observers such as logging systems, monitoring dashboards, or notification services to be added later.
+
+---
+
+### Command Pattern
+
+* ElevatorCommand
+* ElevatorRequest
+
+`ElevatorRequest` encapsulates an elevator request as a command.
+
+It supports two types of requests:
+
+* External request — a passenger requests an elevator from a floor.
+* Internal request — a passenger selects a destination floor inside an elevator.
+
+```text
+ElevatorRequest
+       |
+       v
+ElevatorController
+       |
+       +---- requestElevator()
+       |
+       +---- requestFloor()
+```
+
+---
+
+### Factory Pattern
+
+* ElevatorFactory
+
+The factory creates different elevator implementations based on the requested type.
+
+Currently supported types include:
+
+* Standard Elevator
+* Express Elevator
+
+```text
+ElevatorFactory
+      |
+      +---- Elevator
+      |
+      +---- ExpressElevator
+```
+
+This makes it easier to add new elevator types without changing the client code.
+
+---
+
+## Composition
+
+### Building → ElevatorController
+
+A `Building` owns its `ElevatorController`.
+
+```text
+Building
+    |
+    +---- ElevatorController
+```
+
+### ElevatorController → Elevator
+
+The controller manages the elevators in the building.
+
+```text
+ElevatorController
+    |
+    +---- Elevator
+    |
+    +---- Elevator
+    |
+    +---- Elevator
+```
+
+### ElevatorController → Floor
+
+The controller maintains the floors available in the building.
+
+```text
+ElevatorController
+    |
+    +---- Floor
+    |
+    +---- Floor
+    |
+    +---- Floor
+```
+
+---
+
+## Relationships
+
+### Elevator → ElevatorObserver
+
+The elevator maintains a list of observers and notifies them about state and floor changes.
+
+### Elevator → ElevatorRequest
+
+The elevator maintains a queue of pending requests.
+
+### ElevatorController → SchedulingStrategy
+
+The controller delegates the decision of the next elevator stop to the selected scheduling strategy.
+
+### ElevatorRequest → ElevatorController
+
+An elevator request delegates its execution to the controller.
+
+### ElevatorController → Elevator
+
+The controller manages and operates all elevators.
+
+### ElevatorController → Floor
+
+The controller maintains the floors of the building.
+
+### Elevator → Direction
+
+Each elevator has a current direction:
+
+* UP
+* DOWN
+* IDLE
+
+### Elevator → ElevatorState
+
+Each elevator has an operational state:
+
+* IDLE
+* MOVING
+* STOPPED
+* MAINTENANCE
+
+### ExpressElevator → Elevator
+
+`ExpressElevator` extends the base `Elevator` and overrides movement behavior.
+
+---
+
+## Flow
+
+```text
+                    Building
+                       |
+                       v
+              ElevatorController
+                 /      |       \
+                /       |        \
+               v        v         v
+          Elevators    Floors   SchedulingStrategy
+              |                    |
+              |                    +---- FCFS
+              |                    +---- SCAN
+              |                    +---- LOOK
+              |
+              +---- ElevatorRequest
+              |
+              +---- ElevatorObserver
+                           |
+                           +---- ElevatorDisplay
+```
+
+## Request Flow
+
+```text
+User
+ |
+ +---- External Request
+ |          |
+ |          v
+ |   ElevatorRequest
+ |          |
+ |          v
+ |   ElevatorController
+ |          |
+ |          v
+ |      Elevator
+ |
+ +---- Internal Request
+            |
+            v
+      ElevatorRequest
+            |
+            v
+     ElevatorController
+            |
+            v
+         Elevator
+```
+
+## Scheduling Flow
+
+```text
+ElevatorController
+        |
+        v
+SchedulingStrategy
+        |
+        +---- FCFS
+        |
+        +---- SCAN
+        |
+        +---- LOOK
+        |
+        v
+    Next Stop
+        |
+        v
+     Elevator
+        |
+        v
+  moveToNextStop()
+```
+
+## Elevator Type Creation Flow
+
+```text
+ElevatorController
+        |
+        v
+ ElevatorFactory
+        |
+        +---- Standard Elevator
+        |
+        +---- ExpressElevator
+        |
+        v
+     Elevator
+```
